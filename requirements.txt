@@ -1,0 +1,4 @@
+flask
+speechrecognition
+PyAudio
+python-dotenv
