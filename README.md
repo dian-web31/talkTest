@@ -1,2 +1,2 @@
 # Instalar
-**streamlit**: 
+**speechrecognition**: 

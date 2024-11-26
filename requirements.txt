@@ -1,4 +1,5 @@
-flask
 speechrecognition
 PyAudio
-python-dotenv
+
+#en caso de error, usar este comando -> python3 -m pip install oracledb
+oracledb
