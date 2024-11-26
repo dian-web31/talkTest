@@ -1,5 +1,9 @@
 speechrecognition
 PyAudio
 
+gradio
+webrtcvad
+scipy
+
 #en caso de error, usar este comando -> python3 -m pip install oracledb
 oracledb
