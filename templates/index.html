@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reconocimiento de Voz Continuo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="../static/input.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
+</head>
+<body class="font-sans bg-gray-100 flex justify-center items-center min-h-screen">
+    <div class="relative w-full max-w-2xl">
+        <div class="tilted-box-opposite"></div>
+        <div class="tilted-box"></div>
+        <div class="bg-white rounded-lg neon-border shadow-md p-20 w-full max-w-2xl text-center">
+            <h1 class="text-gray-800 text-2xl mb-5">Reconocimiento de Voz Continuo</h1>
+            <div class="flex justify-center space-x-4 mb-5">
+                <button id="startBtn" class="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
+                    Iniciar Grabación
+                </button>
+                <button id="stopBtn" disabled class="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
+                    Detener Grabación
+                </button>
+            </div>
+            <div id="output" class="bg-gray-50 border border-gray-200 rounded min-h-[290px] max-h-[290px] overflow-y-auto p-5 text-left">
+                <!-- Contenido de salida -->
+            </div>
+            <div id="recordingIndicator" class="hidden">
+                <span  class="inline-block w-4 h-4 bg-red-500 rounded-full animate-pulse"></span>
+                <span class="ml-2 text-red-500">Grabando...</span>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+</body>
+</html>
