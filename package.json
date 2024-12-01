@@ -1,0 +1,21 @@
+{
+  "name": "talktest",
+  "version": "1.0.0",
+  "description": "**speechrecognition**:",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npx tailwindcss -i ./static/input.css -o ./static/styles.css --watch\" \"python app.py\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15"
+  },
+  "dependencies": {
+    "talktest": "file:"
+  }
+}

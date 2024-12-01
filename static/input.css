@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+
+/* Clases personalizadas para el efecto de borde neón cian */
+.neon-border {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+    background-clip: padding-box;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.neon-border:hover {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.5), 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.neon-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: inherit;
+    background: linear-gradient(45deg, cyan, lightblue, cyan);
+    z-index: -1;
+    filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.neon-border:hover::before {
+    opacity: 1;
+}
+
+/* Clases personalizadas para el div inclinado */
+.tilted-box {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(157, 28, 255, 0.1); /* Color #9D1CFF */
+    border: 2px solid rgba(157, 28, 255, 0.5);
+    border-radius: 0.5rem;
+    transform: rotate(-10deg);
+    z-index: -2;
+}
+
+/* Clases personalizadas para el div inclinado en la dirección opuesta */
+.tilted-box-opposite {
+    position: absolute;
+    top: 10px; /* Ajusta según sea necesario */
+    left: 10px; /* Ajusta según sea necesario */
+    width: 100%;
+    height: 100%;
+    background-color: rgba(7, 7, 153, 0.1); /* Color más azul */
+    border: 2px solid rgba(6, 6, 253, 0.5); 
+    border-radius: 0.5rem;
+    transform: rotate(10deg);
+    z-index: -3;
+}
+
+
+.message-spoken {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem; /* Bordes medio redondeados */
+    background-color: #e4e6eb; /* Color gris claro para mensajes hablados */
+    color: black;
+    margin-bottom: 0.5rem;
+}
