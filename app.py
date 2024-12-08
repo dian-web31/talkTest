@@ -5,7 +5,7 @@ import speech_recognition as sr
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from dotenv import load_dotenv
-from src.oracle_db import insert_row
+from src.assistant import get_plate
 
 load_dotenv()
 
@@ -46,7 +46,7 @@ def continuous_recognition():
                     break
 
                 # Insertar en base de datos
-                if insert_row(text):
+                if get_plate(text):
                     # Emitir resultado
                     socketio.emit('recognition_result', {
                         'text': text,
