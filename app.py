@@ -45,7 +45,8 @@ def continuous_recognition():
                     stop_recognition = True
                     break
 
-                # Insertar en base de datos
+                # Comprobar con IA si es una placa válida
+                print("Texto reconocido:", text)
                 if get_plate(text):
                     # Emitir resultado
                     socketio.emit('recognition_result', {

@@ -14,7 +14,8 @@ def get_plate(text):
     - Formato de placas de carros: ABC-123.
     - Formato de placas de motos: ABC-12A.
     Teniendo en cuenta lo anterior, extrae la placa y el tipo de vehículo (carro o moto) del siguiente texto:
-    Texto proporcionado: "{text}" (Recuerda, si en el texto dice abc12a o abc 12a tu lo tomaras con este formato (ABC-12A) y asi mismo para los carros)
+    Texto proporcionado: "{text}" (Recuerda, si en el texto dice abc12a o abc 12a tu lo tomaras con este formato (ABC-12A)
+    en mayuscula las letras y con un guion (-) separando las 3 primeras letras de las otras 3 y asi mismo para los carros)
     Responde estrictamente en formato JSON. Si no puedes extraer una placa válida(
     Recuerda que las placas validas son: - Formato de placas de carros: ABC-123.
     - Formato de placas de motos: ABC-12A.
