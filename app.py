@@ -6,6 +6,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from dotenv import load_dotenv
 from src.assistant import get_plate
+from src.oracle_db import insert_row
 
 load_dotenv()
 
@@ -21,6 +22,8 @@ microphone = sr.Microphone()
 # Variable de control
 is_listening = False
 stop_recognition = False
+recognition_thread = None
+recognition_lock = threading.Lock()
 
 def continuous_recognition():
     global is_listening, stop_recognition
@@ -46,11 +49,15 @@ def continuous_recognition():
                     break
 
                 # Insertar en base de datos
-                if get_plate(text):
+                plate_info = get_plate(text)
+                if plate_info:
+                    # Insertar en base de datos
+                    insert_row(plate_info['plate'], plate_info['type'])
+                    
                     # Emitir resultado
                     socketio.emit('recognition_result', {
-                        'text': text,
-                        'status': 'success'
+                        'text': f"Placa reconocida: {plate_info['plate']} ({plate_info['type']})",
+                        'status': 'success','type': 'plate'
                     })
 
                 # Delay de 3 segundos
@@ -81,17 +88,22 @@ def index():
 
 @socketio.on('start_recognition')
 def handle_start_recognition():
-    global is_listening, stop_recognition
+    global is_listening, stop_recognition, recognition_thread
 
-    # Reiniciar banderas
-    is_listening = True
-    stop_recognition = False
+    with recognition_lock:
+        if recognition_thread is not None and recognition_thread.is_alive():
+            emit('recognition_result', {'text': 'El reconocimiento ya está en curso', 'status': 'error'})
+            return
 
-    # Iniciar reconocimiento en un hilo separado
-    recognition_thread = threading.Thread(target=continuous_recognition)
-    recognition_thread.start()
+        # Reiniciar banderas
+        is_listening = True
+        stop_recognition = False
 
-    emit('recognition_started', {'message': 'Reconocimiento iniciado'})
+        # Iniciar reconocimiento en un hilo separado
+        recognition_thread = threading.Thread(target=continuous_recognition)
+        recognition_thread.start()
+
+        emit('recognition_started', {'message': 'Reconocimiento iniciado'})
 
 @socketio.on('stop_recognition')
 def handle_stop_recognition():

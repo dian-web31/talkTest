@@ -6,10 +6,70 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const recordingIndicator = document.getElementById('recordingIndicator');
     let isRecording = false;
 
-       // Asegúrate de que los botones y el indicador de grabación estén en el estado correcto al cargar la página
-       startBtn.disabled = false;
-       stopBtn.disabled = true;
-       recordingIndicator.classList.add('hidden');
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    recordingIndicator.classList.add('hidden');
+
+
+    socket.on('recognition_result', (data) => {
+        switch(data.status) {
+            case 'confirm':
+                // Crear contenedor para el mensaje y el botón
+                const container = document.createElement('div');
+                container.classList.add('mb-4', 'p-2', 'rounded-lg', 'bg-blue-100');
+                
+                // Agregar el texto reconocido
+                const textElement = document.createElement('p');
+                textElement.textContent = `Texto reconocido: "${data.text}"`;
+                textElement.classList.add('mb-2', 'font-medium');
+                
+                // Agregar la información de la placa
+                const plateElement = document.createElement('p');
+                plateElement.textContent = `Placa detectada: ${data.plate} (${data.type})`;
+                plateElement.classList.add('mb-2', 'font-bold');
+                
+                // Crear botón de confirmación
+                const confirmBtn = document.createElement('button');
+                confirmBtn.textContent = 'Confirmar Placa';
+                confirmBtn.classList.add(
+                    'bg-green-500', 'text-white', 'px-4', 'py-2', 'rounded',
+                    'hover:bg-green-600', 'transition-colors'
+                );
+                
+                // Agregar evento al botón
+                confirmBtn.onclick = () => {
+                    socket.emit('confirm_plate', {
+                        plate: data.plate,
+                        type: data.type
+                    });
+                    confirmBtn.disabled = true;
+                    confirmBtn.classList.add('opacity-50');
+                };
+                
+                // Agregar elementos al contenedor
+                container.appendChild(textElement);
+                container.appendChild(plateElement);
+                container.appendChild(confirmBtn);
+                
+                // Agregar contenedor al output
+                output.appendChild(container);
+                output.scrollTop = output.scrollHeight;
+                break;
+
+            case 'success':
+                addMessage(data.text, 'success');
+                break;
+
+            case 'error':
+                addMessage(data.text, 'error');
+                break;
+
+            case 'exit':
+                addMessage('Reconocimiento finalizado por comando de voz', 'info');
+                stopBtn.click();
+                break;
+        }
+    });
 
     startBtn.addEventListener('click', () => {
         if (!isRecording) {
@@ -28,7 +88,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             startBtn.disabled = false;
             stopBtn.disabled = true;
             recordingIndicator.classList.add('hidden');
-            //addMessage('Reconocimiento detenido', 'warning');
+            addMessage('Reconocimiento detenido', 'warning');
             isRecording = false;
         }
     });
@@ -36,7 +96,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     socket.on('recognition_result', (data) => {
         switch(data.status) {
             case 'success':
-                addMessage(data.text, 'spoken');
+                // Si tiene un tipo específico, úsalo; de lo contrario, usa 'spoken'
+                addMessage(data.text, data.type || 'spoken');
                 break;
             case 'error':
                 addMessage(`Error: ${data.text}`, 'error');
@@ -65,27 +126,27 @@ document.addEventListener('DOMContentLoaded', (event) => {
     function addMessage(text, type) {
         const messageElement = document.createElement('p');
         messageElement.textContent = text;
-        messageElement.classList.add('message','font-serif','mb-4'); // Aplicar la tipografía Times New Roman
+        messageElement.classList.add('message', 'font-serif', 'mb-4', 'p-2', 'rounded-lg'); // Aplicar la tipografía Times New Roman y fondo redondeado
 
         switch(type) {
             case 'spoken':
-                messageElement.classList.add('message-spoken', 'font-medium'); // Negro para texto hablado
-                break;
-            case 'success':
-                messageElement.classList.add('text-green-500', 'font-medium', 'text-center');
-                break;
-            case 'error':
-                messageElement.classList.add('text-red-500', 'font-medium');
-                break;
-            case 'warning':
-                messageElement.classList.add('text-yellow-500', 'font-medium', 'text-center');
-                break;
-            case 'info':
-                messageElement.classList.add('text-blue-500', 'font-medium', 'text-center');
-                break;
-            case 'waiting':
-                messageElement.classList.add('text-purple-500', 'font-medium');
-                break;
+            messageElement.classList.add('bg-gray-100', 'text-black', 'font-medium');
+            break;
+        case 'plate':  // Nuevo caso para las placas válidas
+            messageElement.classList.add('bg-green-100', 'text-green-800', 'font-bold', 'text-center');
+            break;
+        case 'error':
+            messageElement.classList.add('bg-red-100', 'text-red-500', 'font-medium');
+            break;
+        case 'warning':
+            messageElement.classList.add('bg-yellow-100', 'text-yellow-500', 'font-medium', 'text-center');
+            break;
+        case 'info':
+            messageElement.classList.add('bg-blue-100', 'text-blue-500', 'font-medium', 'text-center');
+            break;
+        case 'waiting':
+            messageElement.classList.add('bg-purple-100', 'text-purple-500', 'font-medium');
+            break;
         }
         
         output.appendChild(messageElement);
