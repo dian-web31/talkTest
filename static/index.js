@@ -27,31 +27,31 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 
                 // Agregar la información de la placa
                 const plateElement = document.createElement('p');
-                plateElement.textContent = `Placa detectada: ${data.plate} (${data.type})`;
+                plateElement.textContent = `Esta es su placa: ${data.placa}?`;
                 plateElement.classList.add('mb-2', 'font-bold');
                 
                 // Crear botón de confirmación
-                const confirmBtn = document.createElement('button');
-                confirmBtn.textContent = 'Confirmar Placa';
-                confirmBtn.classList.add(
-                    'bg-green-500', 'text-white', 'px-4', 'py-2', 'rounded',
-                    'hover:bg-green-600', 'transition-colors'
-                );
+                // const confirmBtn = document.createElement('button');
+                // confirmBtn.textContent = 'Confirmar Placa';
+                // confirmBtn.classList.add(
+                //     'bg-green-500', 'text-white', 'px-4', 'py-2', 'rounded',
+                //     'hover:bg-green-600', 'transition-colors'
+                // );
                 
                 // Agregar evento al botón
-                confirmBtn.onclick = () => {
-                    socket.emit('confirm_plate', {
-                        plate: data.plate,
-                        type: data.type
-                    });
-                    confirmBtn.disabled = true;
-                    confirmBtn.classList.add('opacity-50');
-                };
+                // confirmBtn.onclick = () => {
+                //     socket.emit('confirm_plate', {
+                //         plate: data.plate,
+                //         type: data.type
+                //     });
+                //     confirmBtn.disabled = true;
+                //     confirmBtn.classList.add('opacity-50');
+                // };
                 
                 // Agregar elementos al contenedor
                 container.appendChild(textElement);
                 container.appendChild(plateElement);
-                container.appendChild(confirmBtn);
+                // container.appendChild(confirmBtn);
                 
                 // Agregar contenedor al output
                 output.appendChild(container);
@@ -72,9 +72,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 break;
             case 'info':
                 // Mostrar la información de la placa en la interfaz
-                addMessage(`Texto reconocido: ${data.text}`, 'info');
-                addMessage(`Información de placa: ${JSON.stringify(data.plate_info, null, 2)}`, 'info');
-                break;
+                // addMessage(`Texto reconocido: ${data.text}`, 'info');
+                if ((data.placa != null) && (data.placa != undefined)) {
+                    addMessage(`Esta es su placa: ${data.placa}?`, 'info');
+                    break;
+                }
+                else{
+                    addMessage(`Vuelva a repetir la placa, por favor`, 'info');
+                    break;
+                }
+                
         }
     });
 
@@ -105,13 +112,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
         switch(data.status) {
             case 'success':
                 // Si tiene un tipo específico, úsalo; de lo contrario, usa 'spoken'
-                addMessage(data.text, data.type || 'spoken');
+                // addMessage(data.text, data.type || 'spoken');
                 break;
             case 'error':
-                addMessage(`Error: ${data.text}`, 'error');
+                // addMessage(`Error: ${data.text}`, 'error');
                 break;
             case 'exit':
-                addMessage('Reconocimiento finalizado por comando de voz', 'info');
+                // addMessage('Reconocimiento finalizado por comando de voz', 'info');
                 stopBtn.click();
                 break;
         }

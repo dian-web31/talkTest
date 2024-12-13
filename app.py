@@ -52,15 +52,19 @@ def continuous_recognition():
                 # Obtener información de la placa
                 plate_info = get_plate(text)  # Llama a la función get_plate para obtener la información de la placa
                 print(f"Información de placa recibida: {plate_info}")  # Imprime la información de la placa
+
+                plate = plate_info.get('placa') # Obtiene la placa de la información
+                print("plate .get()", plate)
+                print("plate_info['placa']", plate_info['placa']) 
                 
                 # Emitir la información de la placa al cliente
                 socketio.emit('recognition_result', {
                     'text': text,
-                    'plate_info': plate_info,
+                    'plate_info': plate,
                     'status': 'info'
                 })  # Emite la información de la placa al cliente a través de SocketIO
                 
-                if plate_info and plate_info['placa']:  # Si se obtuvo una placa válida
+                if plate:  # Si se obtuvo una placa válida
                     confirmed = False  # Variable para controlar la confirmación del usuario
                     max_attempts = 3  # Limita los intentos para evitar un bucle infinito
                     attempts = 0  # Contador de intentos

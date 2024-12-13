@@ -1,20 +1,26 @@
-import json
-from langchain_google_genai import GoogleGenerativeAI
 import os
-from src.oracle_db import insert_row
+from mistralai import Mistral
+import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Configuración inicial de Mistral AI
+api_key = os.environ["MISTRAL_API_KEY"]
+model = "mistral-large-latest"
+client = Mistral(api_key=api_key)
 
 def get_plate(text):
-    # Configuración de la API de Google Generative AI
-    llm = GoogleGenerativeAI(model='gemini-pro', google_api_key=os.environ['API_KEY_GEMINI'])
-
     prompt = f"""
+    Debes eliminar espacios y extraer la placa y el tipo de vehículo de un texto.
     Extrae información de un texto sobre placas de vehículos colombianos:
     - Formato de placas de carros: ABC-123.
     - Formato de placas de motos: ABC-12A.
-
+    Ten en cuenta que las placas de carros y motos siempre estarán en mayúsculas y separadas con un guion (-) al momento de dar la respuesta.
     Teniendo en cuenta lo anterior, elimina todos los espacios, extrae la placa y el tipo de vehículo (carro o moto) del siguiente texto:
     Texto proporcionado: "{text}"
-    Recuerda, si en el texto tiene el formato (abc12a, abc 12a para moto lo tomaras con este formato ABC-12A) (y en caso de los carros si recibes la placa con este formato abc123, abc 123, retornaras con este tipo de formato ABC-123 ), tu lo tomaras con este y así mismo para los carros.
+    Recuerda, si en el texto tiene el formato (en caso de las motos si se recibe esto: abc12a, abc 12a. Para moto lo tomaras con este formato ABC-12A) 
+    (y en caso de los carros si recibes la placa con este formato abc123, abc 123 , retornaras con este tipo de formato ABC-123 ), tu lo tomaras con este y así mismo para los carros.
     Si el texto contiene espacios entre los caracteres de la placa, elimínalos y formatea la placa correctamente.
     Responde estrictamente en formato JSON. Si no puedes extraer una placa válida, responde con:
     {{
@@ -25,25 +31,31 @@ def get_plate(text):
     """
 
     try:
-        response = llm.invoke(prompt)
-        print("la response es:", response)
+        # Llama al modelo Mistral para procesar el prompt
+        response = client.chat.complete(
+            model=model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        response_text = response.choices[0].message.content.strip()
+        print("La respuesta es:", response_text)
 
-        if not response:
-            raise ValueError("Respuesta vacía del servicio externo")
+        if response_text.startswith("```json") and response_text.endswith("```"):
+            response_text = response_text[7:-3].strip()
+            print("La respuesta es:", response_text)
 
-        response = json.loads(response)
-        placa = response.get("placa")
-        tipo_vehiculo = response.get("tipo_vehiculo")
-        error = response.get("error")
-
-        if placa is None:
-            print("no se obtuvo la placa por esto: ", error)
+        response_json = json.loads(response_text)
+        if response_json.get("placa") is None:
+            error = response_json.get("error")
+            print("No se obtuvo la placa por esto: ", error)
             return {
                 'placa': None,
                 'tipo_vehiculo': None,
                 'error': error
             }
         else:
+            print("Respuesta JSON:", response_json)
+            placa = response_json.get("placa")
+            tipo_vehiculo = response_json.get("tipo_vehiculo")
             return {
                 'placa': placa,
                 'tipo_vehiculo': tipo_vehiculo
@@ -56,11 +68,8 @@ def get_plate(text):
             'tipo_vehiculo': None,
             'error': str(e)
         }
-        
-def comprobation(text):
-    # Configuración de la API de Google Generative AI
-    llm = GoogleGenerativeAI(model='gemini-pro', google_api_key=os.environ['API_KEY_GEMINI'])
 
+def comprobation(text):
     prompt = f"""
     Texto proporcionado: "{text}"
     Determina si el texto es una confirmación.
@@ -75,16 +84,17 @@ def comprobation(text):
     """
 
     try:
-        # Llama al modelo para generar contenido
-        response = llm.invoke(prompt)  # Envía el prompt al modelo Gemini Pro y obtiene una respuesta.
+        # Llama al modelo Mistral para procesar el prompt
+        response = client.chat.complete(
+            model=model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        response_text = response["choices"][0]["message"]["content"].strip().lower()
+        print("La respuesta es:", response_text)
 
-        print("la response es:", response)
-
-        # Convertir la respuesta a un valor booleano
-        response = response.strip().lower()
-        if response == "true":
+        if response_text == "true":
             return True
-        elif response == "false":
+        elif response_text == "false":
             return False
         else:
             raise ValueError("Respuesta inesperada del modelo")

@@ -1,7 +1,7 @@
 import oracledb
 import os
 
-oracledb.init_oracle_client(lib_dir=r"C:\instantclient_11_2")
+oracledb.init_oracle_client(lib_dir=r"C:\oraclexe\app\oracle\instantclient-basic-windows.x64-11.2.0.4.0\instantclient_11_2")
 #Funcion para insertar una fila en la base de datos que es numero de matricula y typo de vehiculo
 def insert_row(license_plates, type_vehicle):
     try:
