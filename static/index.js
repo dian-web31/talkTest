@@ -3,14 +3,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const output = document.getElementById('output');
-    const recordingIndicator = document.getElementById('recordingIndicator');
+    recordingIndicator = document.getElementById('recordingIndicator');
     let isRecording = false;
 
     startBtn.disabled = false;
     stopBtn.disabled = true;
+    
     recordingIndicator.classList.add('hidden');
 
 
+    
     socket.on('recognition_result', (data) => {
         switch(data.status) {
             case 'confirm':
@@ -68,6 +70,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 addMessage('Reconocimiento finalizado por comando de voz', 'info');
                 stopBtn.click();
                 break;
+            case 'info':
+                // Mostrar la información de la placa en la interfaz
+                addMessage(`Texto reconocido: ${data.text}`, 'info');
+                addMessage(`Información de placa: ${JSON.stringify(data.plate_info, null, 2)}`, 'info');
+                break;
         }
     });
 
@@ -77,18 +84,19 @@ document.addEventListener('DOMContentLoaded', (event) => {
             startBtn.disabled = true;
             stopBtn.disabled = false;
             recordingIndicator.classList.remove('hidden');
-            addMessage('Iniciando reconocimiento...', 'info');
+            //addMessage('Iniciando reconocimiento...', 'info');
             isRecording = true;
         }
     });
 
     stopBtn.addEventListener('click', () => {
         if (isRecording) {
+            socket.emit('prueba')
             socket.emit('stop_recognition');
             startBtn.disabled = false;
             stopBtn.disabled = true;
             recordingIndicator.classList.add('hidden');
-            addMessage('Reconocimiento detenido', 'warning');
+            //addMessage('Reconocimiento detenido', 'warning');
             isRecording = false;
         }
     });
@@ -149,12 +157,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
             break;
         }
         
+        //agregar el mensaje al contenido de salida y asegurar que siempre esta visible el mensaje mas reciente
         output.appendChild(messageElement);
         output.scrollTop = output.scrollHeight;
 
-        return messageElement;
+        return messageElement;//devuelve el elemento para interactuar con el en otras funciones
     }
 
+    /* Actualiza el texto del mensaje en intervalos de 1 segundo y, cuando termina la cuenta regresiva, cambia el texto a "Puede hablar ahora". */
     function startCountdown(seconds, messageElement) {
         let remainingSeconds = seconds;
         const interval = setInterval(() => {
