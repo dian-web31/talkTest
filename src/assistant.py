@@ -11,6 +11,7 @@ def get_plate(text):
     Extrae información de un texto sobre placas de vehículos colombianos:
     - Formato de placas de carros: ABC-123.
     - Formato de placas de motos: ABC-12A.
+
     Teniendo en cuenta lo anterior, elimina todos los espacios, extrae la placa y el tipo de vehículo (carro o moto) del siguiente texto:
     Texto proporcionado: "{text}"
     Recuerda, si en el texto tiene el formato (abc12a, abc 12a para moto lo tomaras con este formato ABC-12A) (y en caso de los carros si recibes la placa con este formato abc123, abc 123, retornaras con este tipo de formato ABC-123 ), tu lo tomaras con este y así mismo para los carros.
