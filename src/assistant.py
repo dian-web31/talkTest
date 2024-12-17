@@ -12,10 +12,15 @@ client = Mistral(api_key=api_key)
 
 def get_plate(text):
     prompt = f"""
+    Tu objetivo sera extraer Placas de vehiculo, las personas van a deletrear las letras y los numeros de la placa,
+    tu deberas formatear la placa correctamente, si la placa es de un carro debera tener el formato ABC-123 y si la placa es de una moto debera tener el formato ABC-12A.
+    ten en cuenta que vamos a usar las palabras de todo el alfabeto en mayusculas y los numeros del 0 al 9.
     Debes eliminar espacios y extraer la placa y el tipo de vehículo de un texto.
     Extrae información de un texto sobre placas de vehículos colombianos:
     - Formato de placas de carros: ABC-123.
     - Formato de placas de motos: ABC-12A.
+    Las placas de CARROS siempre seran tres letras en mayúsculas, seguidas de un guion (-) y tres números.
+    Las placas de MOTOS siempre seran tres letras en mayúsculas, seguidas de un guion (-) y dos números y una letra en mayuscula.
     Ten en cuenta que las placas de carros y motos siempre estarán en mayúsculas y separadas con un guion (-) al momento de dar la respuesta.
     Teniendo en cuenta lo anterior, elimina todos los espacios, extrae la placa y el tipo de vehículo (carro o moto) del siguiente texto:
     Texto proporcionado: "{text}"
@@ -24,10 +29,11 @@ def get_plate(text):
     Si el texto contiene espacios entre los caracteres de la placa, elimínalos y formatea la placa correctamente.
     Responde estrictamente en formato JSON. Si no puedes extraer una placa válida, responde con:
     {{
-        "placa": null,
-        "tipo_vehiculo": null,
+        "placa": None,
+        "tipo_vehiculo": None,
         "error": "Motivo del error aquí."
     }}
+
     """
 
     try:
@@ -37,7 +43,6 @@ def get_plate(text):
             messages=[{"role": "user", "content": prompt}]
         )
         response_text = response.choices[0].message.content.strip()
-        print("La respuesta es:", response_text)
 
         if response_text.startswith("```json") and response_text.endswith("```"):
             response_text = response_text[7:-3].strip()
@@ -80,7 +85,7 @@ def comprobation(text):
     Respuestas negativas incluyen (pero no se limitan a):
     - no, negativo, incorrecto, falso, equivocado, error
     
-    Responde únicamente "true" o "false".
+    Responde únicamente con el valor booleano {True} o {False}.
     """
 
     try:
@@ -89,12 +94,12 @@ def comprobation(text):
             model=model,
             messages=[{"role": "user", "content": prompt}]
         )
-        response_text = response["choices"][0]["message"]["content"].strip().lower()
-        print("La respuesta es:", response_text)
+        response_text = response.choices[0].message.content.strip()
+        print("Respuesta del modelo:", response_text)
 
-        if response_text == "true":
+        if response_text == "True":
             return True
-        elif response_text == "false":
+        elif response_text == "False":
             return False
         else:
             raise ValueError("Respuesta inesperada del modelo")

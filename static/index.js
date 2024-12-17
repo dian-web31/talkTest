@@ -11,7 +11,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
     
     recordingIndicator.classList.add('hidden');
 
-
+    document.addEventListener('click', (event) => {
+        console.log('Elemento clickeado:', event.target);
+    });
     
     socket.on('recognition_result', (data) => {
         switch(data.status) {
@@ -73,13 +75,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
             case 'info':
                 // Mostrar la información de la placa en la interfaz
                 // addMessage(`Texto reconocido: ${data.text}`, 'info');
-                if ((data.placa != null) && (data.placa != undefined)) {
-                    addMessage(`Esta es su placa: ${data.placa}?`, 'info');
+                console.log("data.placa es igual a: ",data)
+                if ((data.plate == null) || (data.plate == undefined)) {
+                    addMessage(`Vuelva a repetir la placa, por favor`, 'info');
                     break;
                 }
                 else{
-                    addMessage(`Vuelva a repetir la placa, por favor`, 'info');
-                    break;
+                    addMessage(`¿Esta es su placa: ${data.plate} ?`, 'info');
+                    return true;
                 }
                 
         }
@@ -105,22 +108,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
             recordingIndicator.classList.add('hidden');
             //addMessage('Reconocimiento detenido', 'warning');
             isRecording = false;
-        }
-    });
-
-    socket.on('recognition_result', (data) => {
-        switch(data.status) {
-            case 'success':
-                // Si tiene un tipo específico, úsalo; de lo contrario, usa 'spoken'
-                // addMessage(data.text, data.type || 'spoken');
-                break;
-            case 'error':
-                // addMessage(`Error: ${data.text}`, 'error');
-                break;
-            case 'exit':
-                // addMessage('Reconocimiento finalizado por comando de voz', 'info');
-                stopBtn.click();
-                break;
         }
     });
 

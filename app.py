@@ -1,5 +1,4 @@
 import os  # Importa el módulo os para interactuar con el sistema operativo
-import time  # Importa el módulo time para manejar retrasos
 import threading  # Importa el módulo threading para manejar hilos
 import speech_recognition as sr  # Importa el módulo speech_recognition para reconocimiento de voz
 from flask import Flask, render_template  # Importa Flask y render_template para crear la aplicación web
@@ -13,11 +12,10 @@ load_dotenv()  # Carga las variables de entorno desde un archivo .env
 # Crear aplicación Flask
 app = Flask(__name__)  # Crea una instancia de la aplicación Flask
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_secret_key')  # Configura la clave secreta de la aplicación
-socketio = SocketIO(app, cors_allowed_origins="*", logger=False, engineio_logger=False)  # Configura SocketIO para la aplicación Flask
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)  # Configura SocketIO para la aplicación Flask
 
 # Reconocedor de voz
 recognizer = sr.Recognizer()  # Crea una instancia del reconocedor de voz
-microphone = sr.Microphone()  # Crea una instancia del micrófono
 
 # Variables de control
 is_listening = False  # Variable para controlar si el reconocimiento está activo
@@ -30,7 +28,7 @@ def continuous_recognition():
 
     while not stop_recognition:  # Bucle principal que se ejecuta mientras no se detenga el reconocimiento
         try:
-            with microphone as source:  # Usa el micrófono como fuente de audio
+            with sr.Microphone() as source:  # Usa el micrófono como fuente de audio
                 # Ajustar para ruido ambiental
                 recognizer.adjust_for_ambient_noise(source, duration=0.5)  # Ajusta el reconocedor para el ruido ambiental
 
@@ -54,63 +52,57 @@ def continuous_recognition():
                 print(f"Información de placa recibida: {plate_info}")  # Imprime la información de la placa
 
                 plate = plate_info.get('placa') # Obtiene la placa de la información
-                print("plate .get()", plate)
-                print("plate_info['placa']", plate_info['placa']) 
                 
                 # Emitir la información de la placa al cliente
-                socketio.emit('recognition_result', {
+                confirmacion = socketio.emit('recognition_result', {
                     'text': text,
-                    'plate_info': plate,
+                    'plate': plate,
                     'status': 'info'
                 })  # Emite la información de la placa al cliente a través de SocketIO
+                print(f"Confirmación de placa: {confirmacion}")  # Imprime la confirmación de la placa
                 
-                if plate:  # Si se obtuvo una placa válida
+                if confirmacion == None:  # Si se obtuvo una placa válida
                     confirmed = False  # Variable para controlar la confirmación del usuario
                     max_attempts = 3  # Limita los intentos para evitar un bucle infinito
                     attempts = 0  # Contador de intentos
                     
-                    while not confirmed and attempts < max_attempts:  # Bucle para pedir confirmación al usuario
-                        print("Esperando confirmación del usuario...")  # Imprime un mensaje indicando que está esperando confirmación
-                        socketio.emit('waiting', {'message': 'Esperando confirmación del usuario...'})  # Emite un mensaje de espera al cliente
-                        
-                        audio = recognizer.listen(source)  # Escucha el audio del micrófono
-                        confirmation_text = recognizer.recognize_google(audio, language="es-CO")  # Reconoce el texto del audio usando Google
-                        confirmed = comprobation(confirmation_text)  # Llama a la función comprobation para verificar la confirmación
-                        
-                        if confirmed:  # Si el usuario confirma
-                            # Insertar en base de datos
-                            insert_row(plate_info['placa'], plate_info['tipo_vehiculo'])  # Inserta la información de la placa en la base de datos
+                    try:
+                        if not confirmed and attempts < max_attempts:  # Bucle para pedir confirmación al usuario
+                                
+                            socketio.emit('waiting', {'message': 'Esperando 3 segundos...'})  # Emite un mensaje de espera al cliente
+                            recognizer.adjust_for_ambient_noise(source, duration=0.5)  # Ajusta el reconocedor para el ruido ambiental
+                            audio = recognizer.listen(source)  # Escucha el audio del micrófono
+                            confirmation_text = recognizer.recognize_google(audio, language="es-CO")  # Reconoce el texto del audio usando Google
+                            confirmed = comprobation(confirmation_text)  # Llama a la función comprobation para verificar la confirmación
+                            print(f"Confirmación de placa: {confirmed}")  # Imprime la confirmación de la placa
+                                
+                            if confirmed:  # Si el usuario confirma
+                                # Insertar en base de datos
+                                insert_row(plate_info['placa'], plate_info['tipo_vehiculo'])  # Inserta la información de la placa en la base de datos
+                                socketio.emit('recognition_result', {
+                                    'text': f"Placa reconocida: {plate_info['placa']} ({plate_info['tipo_vehiculo']})",
+                                    'status': 'success',
+                                    'type': 'plate'
+                                })  # Emite un evento de éxito al cliente a través de SocketIO
+                            else:  # Si el usuario no confirma
+                                attempts += 1  # Incrementa el contador de intentos
+                                socketio.emit('recognition_result', {
+                                    'text': 'Por favor, repita la placa.',
+                                    'status': 'error'
+                                })  # Emite un evento de error al cliente a través de SocketIO                    
+                                    
+                        else:  # Si no se confirmó después del número máximo de intentos
                             socketio.emit('recognition_result', {
-                                'text': f"Placa reconocida: {plate_info['placa']} ({plate_info['tipo_vehiculo']})",
-                                'status': 'success',
-                                'type': 'plate'
-                            })  # Emite un evento de éxito al cliente a través de SocketIO
-                            break  # Sale del bucle si se confirma
-                        else:  # Si el usuario no confirma
-                            attempts += 1  # Incrementa el contador de intentos
-                            socketio.emit('recognition_result', {
-                                'text': 'Por favor, repita la placa.',
+                                'text': 'Número máximo de intentos alcanzado. Continuando con el siguiente reconocimiento.',
                                 'status': 'error'
                             })  # Emite un evento de error al cliente a través de SocketIO
-                            
-                            if attempts < max_attempts:  # Si no se ha alcanzado el número máximo de intentos
-                                print("Esperando nueva matrícula...")  # Imprime un mensaje indicando que está esperando una nueva matrícula
-                                audio = recognizer.listen(source)  # Escucha el audio del micrófono
-                                text = recognizer.recognize_google(audio, language="es-CO")  # Reconoce el texto del audio usando Google
-                                print(f"Texto reconocido: {text}")  # Imprime el texto reconocido
-                                plate_info = get_plate(text)  # Llama a la función get_plate para obtener la información de la nueva placa
-                                print(f"Información de placa recibida: {plate_info}")  # Imprime la información de la nueva placa
-                                socketio.emit('recognition_result', {
-                                    'text': text,
-                                    'plate_info': plate_info,
-                                    'status': 'info'
-                                })  # Emite la información de la nueva placa al cliente a través de SocketIO
-                    
-                    if not confirmed:  # Si no se confirmó después del número máximo de intentos
+                            break  # Sale del bucle
+
+                    except sr.UnknownValueError:  # Si hubo un error inesperado
                         socketio.emit('recognition_result', {
-                            'text': 'Número máximo de intentos alcanzado. Continuando con el siguiente reconocimiento.',
-                            'status': 'error'
-                        })  # Emite un evento de error al cliente a través de SocketIO
+                            'text': 'No se entendió la confirmación, por favor repita la placa.',
+                            'status': 'error'   
+                        })
 
                 else:  # Si no se pudo procesar la placa
                     socketio.emit('recognition_result', {
@@ -120,7 +112,7 @@ def continuous_recognition():
 
                 # Delay de 3 segundos
                 socketio.emit('waiting', {'message': 'Esperando 3 segundos...'})  # Emite un mensaje de espera al cliente a través de SocketIO
-                time.sleep(3)  # Espera 3 segundos
+                socketio.sleep(3)   # Espera 3 segundos
 
         except sr.UnknownValueError:  # Si no se entendió el audio
             socketio.emit('recognition_result', {
